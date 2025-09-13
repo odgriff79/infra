@@ -6,6 +6,10 @@ on:
         type: string
         required: false
         default: claude
+      health_url:
+        type: string
+        required: false
+        default: ""
 
 jobs:
   run:
@@ -15,7 +19,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Echo selected model
-        shell: bash
         run: echo "MODEL_PROFILE=${{ inputs.model }}"
 
       - name: Run orchestrator if present
@@ -27,3 +30,23 @@ jobs:
           else
             echo "No tools/orchestrator.ps1 found; skipping."
           fi
+
+      - name: Optional health check
+        if: ${{ inputs.health_url != '' }}
+        shell: bash
+        run: |
+          echo "Checking: ${{ inputs.health_url }}"
+          curl -fsS -m 10 -H "User-Agent: actions-health" "${{ inputs.health_url }}"
+          echo "Health OK"
+
+      - name: Summary
+        shell: pwsh
+        run: |
+          $lines = @(
+            "### MCP Sandbox Run",
+            "* Repo: $env:GITHUB_REPOSITORY",
+            "* Commit: $env:GITHUB_SHA",
+            "* Profile: ${{ inputs.model }}",
+            "* Health: $([string]::IsNullOrEmpty('${{ inputs.health_url }}') ? 'n/a' : '${{ inputs.health_url }}')"
+          )
+          $lines -join "`n" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
