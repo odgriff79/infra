@@ -1,5 +1,4 @@
 ﻿name: Reusable Agent Runner
-
 on:
   workflow_call:
     inputs:
@@ -22,7 +21,6 @@ jobs:
     steps:
       - name: Checkout caller repo
         uses: actions/checkout@v4
-        # defaults to the *calling* repo; explicit for clarity
         with:
           repository: ${{ github.repository }}
           fetch-depth: 0
@@ -38,9 +36,10 @@ jobs:
       - name: Summarize
         shell: pwsh
         run: |
-          $lines = @()
-          $lines += "### MCP Sandbox Run"
-          $lines += "* Repo: $env:GITHUB_REPOSITORY"
-          $lines += "* Commit: $env:GITHUB_SHA"
-          $lines += "* Profile: $env:MODEL_PROFILE"
+          $lines = @(
+            "### MCP Sandbox Run",
+            "* Repo: $env:GITHUB_REPOSITORY",
+            "* Commit: $env:GITHUB_SHA",
+            "* Profile: $env:MODEL_PROFILE"
+          )
           $lines -join "`n" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
