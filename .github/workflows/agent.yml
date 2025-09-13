@@ -8,26 +8,24 @@ on:
         default: claude
 
 jobs:
-  run-agent:
+  run:
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - name: Checkout caller repo
+      - name: Checkout caller repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Show selected model
-        shell: pwsh
-        env:
-          MODEL_PROFILE: ${{ inputs.model }}
-        run: |
-          Write-Host "Model profile: $env:MODEL_PROFILE"
+        run: echo "Model: ${{ inputs.model }}"
 
       - name: Run orchestrator if present
-        if: ${{ hashFiles('tools/orchestrator.ps1') != '' }}
         shell: pwsh
-        env:
-          MODEL_PROFILE: ${{ inputs.model }}
-        run: pwsh -File tools/orchestrator.ps1
+        run: |
+          if (Test-Path "tools/orchestrator.ps1") {
+            pwsh -File tools/orchestrator.ps1
+          } else {
+            Write-Host "No tools/orchestrator.ps1 found in caller; skipping."
+          }
