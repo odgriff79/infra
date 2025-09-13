@@ -10,22 +10,20 @@ on:
 jobs:
   run:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
       - name: Checkout caller repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Show selected model
-        run: echo "Model: ${{ inputs.model }}"
+      - name: Echo selected model
+        shell: bash
+        run: echo "MODEL_PROFILE=${{ inputs.model }}"
 
       - name: Run orchestrator if present
-        shell: pwsh
+        shell: bash
         run: |
-          if (Test-Path "tools/orchestrator.ps1") {
+          if [ -f "tools/orchestrator.ps1" ]; then
+            echo "Running orchestrator..."
             pwsh -File tools/orchestrator.ps1
-          } else {
-            Write-Host "No tools/orchestrator.ps1 found in caller; skipping."
-          }
+          else
+            echo "No tools/orchestrator.ps1 found; skipping."
+          fi
