@@ -3,8 +3,8 @@ on:
   workflow_call:
     inputs:
       model:
-        required: false
         type: string
+        required: false
         default: claude
 
 jobs:
@@ -12,34 +12,22 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: read
-    env:
-      MODEL_PROFILE: ${{ inputs.model }}
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
     steps:
       - name: Checkout caller repo
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.repository }}
           fetch-depth: 0
 
       - name: Show selected model
         shell: pwsh
-        run: Write-Host "Model profile: $env:MODEL_PROFILE"
-
-      - name: Run orchestrator stub
-        shell: pwsh
-        run: pwsh -File tools/orchestrator.ps1
-
-      - name: Summarize
-        shell: pwsh
+        env:
+          MODEL_PROFILE: ${{ inputs.model }}
         run: |
-          $lines = @(
-            "### MCP Sandbox Run",
-            "* Repo: $env:GITHUB_REPOSITORY",
-            "* Commit: $env:GITHUB_SHA",
-            "* Profile: $env:MODEL_PROFILE"
-          )
-          $lines -join "`n" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+          Write-Host "Model profile: $env:MODEL_PROFILE"
+
+      - name: Run orchestrator if present
+        if: ${{ hashFiles('tools/orchestrator.ps1') != '' }}
+        shell: pwsh
+        env:
+          MODEL_PROFILE: ${{ inputs.model }}
+        run: pwsh -File tools/orchestrator.ps1
